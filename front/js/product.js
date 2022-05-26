@@ -1,4 +1,15 @@
-import Products from "./ProductsClass.js"
+import FetchApi from "./class/FetchApi.js"
+import Products from "./class/Products.js"
+
+const item__img = document.querySelector(".item__img")
+const title = document.querySelector("#title")
+const prix = document.querySelector("#price")
+const descript = document.querySelector("#description")
+const selectOptions = document.querySelector("#colors")
+const addButton = document.querySelector("#addToCart")
+const qtt = document.querySelector("#quantity")
+
+// let productList = []
 
 const parametresList = new URLSearchParams(document.location.search)
 const idParametre = parametresList.get("id")
@@ -7,30 +18,37 @@ if (!idParametre) {
   alert("aucun produit existant !")
 }
 
-const oneProduct = new Products(`http://localhost:3000/api/products/${idParametre}`)
+const api = new FetchApi(`http://localhost:3000/api/products/${idParametre}`)
+const oneProduct = new Products()
 
-oneProduct.getOneProduct().then(dataProduct => {
+api.getOneProduct().then(dataProduct => {
   const { _id, altTxt, colors, description, imageUrl, name, price } = dataProduct
 
+  if(idParametre !== _id){
+    alert(`Le produit suivant: "${idParametre}" ne correspond à aucun produit`)
+    return
+  }
+
   //ajout de l'image du produit
-  const item__img = document.querySelector(".item__img")
+  
   const imageProduct = oneProduct.createImageTag("img", imageUrl, altTxt)
   item__img.appendChild(imageProduct)
 
   //ajout du titre et le prix du produit
-  const title = document.querySelector("#title")
-  const prix = document.querySelector("#price")
+  
   title.textContent = name
   prix.textContent = price
 
   //ajout de la description du produit
-  const descript = document.querySelector("#description")
+  
   descript.textContent = description
 
   //ajout des options de couleur
-  const selectOptions = document.querySelector("#colors")
+  
   const colorList = oneProduct.insertOption(colors)
   for (let color of colorList) {
     selectOptions.appendChild(color)
   }
 })
+
+addButton.addEventListener("click", () => oneProduct.addToBasket(idParametre, selectOptions.value, qtt.value))

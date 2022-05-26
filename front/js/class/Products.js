@@ -1,52 +1,9 @@
 export default class Products {
-  constructor(uriApi) {
-    this.uriApi = uriApi
-  }
-
   /**
-   * 
-   * @returns Promise
-   */
-
-  async getAllProducts() {
-    let allProducts = []
-    try {
-      const fetchApi = await fetch(this.uriApi)
-      const response = await fetchApi.json()
-      const datas = response
-
-      for (let data of datas) {
-        allProducts.push(data)
-      }
-
-    } catch (error) {
-      console.log(error.message)
-    }
-    return allProducts
-  }
-
-  /**
-   * 
-   * @returns Promise
-   */
-
-  async getOneProduct() {
-    try {
-      const fetchApi = await fetch(this.uriApi)
-      const response = await fetchApi.json()
-      const data = response
-      return data
-
-    } catch (error) {
-      console.log(error.message)
-    }
-  }
-
-  /**
-   * 
-   * @param {array} productsTab 
-   * @returns documentFragment
-   */
+  * 
+  * @param {array} productsTab 
+  * @returns documentFragment
+  */
 
   HTMLallProducts(productsTab) {
     const fragment = new DocumentFragment()
@@ -126,5 +83,45 @@ export default class Products {
     }
     return list
   }
-}
 
+  /**
+   * 
+   * @param {string} idParametre 
+   * @param {string} color 
+   * @param {string} quantity 
+   * @returns void
+   */
+  addToBasket(idParametre, color, quantity) {
+    const qtt = parseInt(quantity)
+    let product = {}
+    let productList = []
+    const getItem = localStorage.getItem("produit")
+
+    if (!color && (qtt <= 0 || qtt > 100)) {
+      alert("Vous devez choisir une couleur et une quantité")
+      return
+    }
+
+    if (!color) {
+      alert("Vous devez choisir une couleur")
+      return
+    }
+    if (qtt <= 0 || qtt > 100) {
+      alert("Vous devez saisir une quantité selon l'intervalle indiqué")
+      return
+    }
+
+    product = { id: idParametre, color, qtt }
+
+    if (!getItem) {
+      productList.push(product)
+      localStorage.setItem("produit", JSON.stringify(productList))
+    }
+
+    if (getItem) {
+      const resultParse = JSON.parse(getItem)
+      resultParse.push(product)
+      localStorage.setItem("produit", JSON.stringify(resultParse))
+    }
+  }
+}
