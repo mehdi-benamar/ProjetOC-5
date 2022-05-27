@@ -31,6 +31,23 @@ export default class Products {
     return fragment
   }
 
+
+  HTMLCartProducts(productsTab) {
+    const fragment = new DocumentFragment()
+    for (let product of productsTab) {
+      const article = document.createElement("article")
+      const cartImg = document.createElement("div")
+      const cartContent = document.createElement("div")
+      const cartDescription = document.createElement("div")
+      const cartSettings = document.createElement("div")
+      const cartQuantity = document.createElement("div")
+      const cartDelete = document.createElement("div")
+
+    }
+
+    return fragment
+  }
+
   /**
    * 
    * @param {string} elementTag 
@@ -94,8 +111,8 @@ export default class Products {
   addToBasket(idParametre, color, quantity) {
     const qtt = parseInt(quantity)
     let product = {}
-    let productList = []
-    const getItem = localStorage.getItem("produit")
+    const getItem = this.getLocalProduct("produit")
+    const ListProductsParse = JSON.parse(getItem)
 
     if (!color && (qtt <= 0 || qtt > 100)) {
       alert("Vous devez choisir une couleur et une quantité")
@@ -114,14 +131,39 @@ export default class Products {
     product = { id: idParametre, color, qtt }
 
     if (!getItem) {
-      productList.push(product)
-      localStorage.setItem("produit", JSON.stringify(productList))
+      localStorage.setItem("produit", JSON.stringify([product]))
     }
 
     if (getItem) {
-      const resultParse = JSON.parse(getItem)
-      resultParse.push(product)
-      localStorage.setItem("produit", JSON.stringify(resultParse))
+      for (let i = 0; i < ListProductsParse.length; i++) {
+        if (ListProductsParse[i].id === idParametre && ListProductsParse[i].color === color) {
+          ListProductsParse[i].qtt = quantity
+          this.setLocalProduct("produit", ListProductsParse)
+          alert(`Le quantité du produit "${ListProductsParse[i].id}" a été mise à jour`)
+          return
+        }
+      }
+      ListProductsParse.push(product)
+      this.setLocalProduct("produit", ListProductsParse)
     }
+  }
+
+  /**
+   * 
+   * @param {string} key 
+   * @returns mixed
+   */
+  getLocalProduct(key) {
+    return localStorage.getItem(key)
+  }
+
+  /**
+   * 
+   * @param {string} key 
+   * @param {mixed} tab 
+   * @returns void
+   */
+  setLocalProduct(key, tab) {
+    return localStorage.setItem(key, JSON.stringify(tab))
   }
 }
