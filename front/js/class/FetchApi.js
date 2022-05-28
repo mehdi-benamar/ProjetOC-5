@@ -1,4 +1,5 @@
 export default class FetchApi {
+  
   constructor(uriApi) {
     this.uriApi = uriApi
   }

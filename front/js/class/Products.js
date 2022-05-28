@@ -31,23 +31,6 @@ export default class Products {
     return fragment
   }
 
-
-  HTMLCartProducts(productsTab) {
-    const fragment = new DocumentFragment()
-    for (let product of productsTab) {
-      const article = document.createElement("article")
-      const cartImg = document.createElement("div")
-      const cartContent = document.createElement("div")
-      const cartDescription = document.createElement("div")
-      const cartSettings = document.createElement("div")
-      const cartQuantity = document.createElement("div")
-      const cartDelete = document.createElement("div")
-
-    }
-
-    return fragment
-  }
-
   /**
    * 
    * @param {string} elementTag 
@@ -111,8 +94,8 @@ export default class Products {
   addToBasket(idParametre, color, quantity) {
     const qtt = parseInt(quantity)
     let product = {}
-    const getItem = this.getLocalProduct("produit")
-    const ListProductsParse = JSON.parse(getItem)
+    const getItem = this.getLocalProduct("product")
+    let findProduct
 
     if (!color && (qtt <= 0 || qtt > 100)) {
       alert("Vous devez choisir une couleur et une quantité")
@@ -130,23 +113,18 @@ export default class Products {
 
     product = { id: idParametre, color, qtt }
 
-    if (!getItem) {
-      localStorage.setItem("produit", JSON.stringify([product]))
-    }
-
     if (getItem) {
-      for (let i = 0; i < ListProductsParse.length; i++) {
-        if (ListProductsParse[i].id === idParametre && ListProductsParse[i].color === color) {
-          ListProductsParse[i].qtt = quantity
-          this.setLocalProduct("produit", ListProductsParse)
-          alert(`Le quantité du produit "${ListProductsParse[i].id}" a été mise à jour`)
-          return
-        }
+      findProduct = getItem.find(obj => obj.id === idParametre && obj.color === color)
+      if (findProduct != null && findProduct.id === idParametre) {
+        findProduct.qtt += qtt
+
+      } else {
+        getItem.push(product)
       }
-      ListProductsParse.push(product)
-      this.setLocalProduct("produit", ListProductsParse)
     }
+    this.setLocalProduct("product", getItem)
   }
+
 
   /**
    * 
@@ -154,7 +132,8 @@ export default class Products {
    * @returns mixed
    */
   getLocalProduct(key) {
-    return localStorage.getItem(key)
+    let basket = localStorage.getItem(key)
+    return (basket != null) ? JSON.parse(basket) : []
   }
 
   /**

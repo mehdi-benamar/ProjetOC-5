@@ -15,7 +15,7 @@ const parametresList = new URLSearchParams(document.location.search)
 const idParametre = parametresList.get("id")
 
 if (!idParametre) {
-  alert("aucun produit existant !")
+  document.location.href = "./../html/index.html"
 }
 
 const api = new FetchApi(`http://localhost:3000/api/products/${idParametre}`)
@@ -25,7 +25,7 @@ api.getOneProduct().then(dataProduct => {
   const { _id, altTxt, colors, description, imageUrl, name, price } = dataProduct
 
   if(idParametre !== _id){
-    alert(`Le produit suivant: "${idParametre}" ne correspond à aucun produit`)
+    document.location.href = "./../html/index.html"
     return
   }
 
