@@ -5,12 +5,30 @@ const api = new FetchApi("http://localhost:3000/api/products")
 const productCart = new Products()
 const getBasketProducts = productCart.getLocalProduct("product")
 
+//constante pour le panier
 const cart_items = document.querySelector("#cart__items")
 const nbArticles = document.querySelector("#totalQuantity")
 const totalBill = document.querySelector("#totalPrice")
 
 
+//constante pour le formulaire
+const validateForm = document.querySelector(".cart__order")
+const form = document.querySelector(".cart__order__form")
+const firstName = document.querySelector("#firstName")
+const lastName = document.querySelector("#lastName")
+const address = document.querySelector("#address")
+const city = document.querySelector("#city")
+const email = document.querySelector("#email")
 
+//constante pour les erreurs de formulaire
+const errorFirstName = document.querySelector("#firstNameErrorMsg")
+const errorLastName = document.querySelector("#lastNameErrorMsg")
+const errorAddress = document.querySelector("#addressErrorMsg")
+const errorCity = document.querySelector("#cityErrorMsg")
+const errorEmail = document.querySelector("#emailErrorMsg")
+
+
+//************************** controller pour les produits du panier ************************
 if (getBasketProducts) {
 
   for (let pdtBasket of getBasketProducts) {
@@ -28,17 +46,124 @@ if (getBasketProducts) {
   }
 }
 
-
-
-
 nbArticles.textContent = totalQuantityArticles(getBasketProducts)
 
+//************************** controller pour les produits du panier ************************
 
+//************************* controller pour le formulaire **********************************
+
+firstName.addEventListener("input", debounce((e) => {
+  const re = /^[a-zA-Z]{3,}$/
+  const value = e.target.value.match(re)
+  console.log(value);
+  if (!value) {
+    errorFirstName.textContent = "Donnée incorrecte, vous devez saisir un prénom correcte";
+  } else {
+    errorFirstName.textContent = ""
+  }
+}))
+
+
+lastName.addEventListener("input", debounce((e) => {
+  const re = /^[a-zA-Z]{3,}$/
+  const value = e.target.value.match(re)
+  console.log(value);
+  if(!value){
+    errorLastName.textContent = "Donnée incorrecte, vous devez saisir un nom correcte";
+  }else{
+    errorLastName.textContent = ""
+  }
+}))
+
+
+address.addEventListener("input", debounce((e) => {
+  const re = /^[a-zA-Z0-9 ]+$/
+  const value = e.target.value.match(re)
+  console.log(value);
+  if(!value){
+    errorAddress.textContent = "Donnée incorrecte, vous devez saisir une adresse correcte";
+  }else{
+    errorAddress.textContent = ""
+  }
+}))
+
+city.addEventListener("input", debounce((e) => {
+  const re = /^[a-zA-Z]{3,}$/
+  const value = e.target.value.match(re)
+  console.log(value);
+  if (!value) {
+    errorCity.textContent = "Donnée incorrecte, vous devez saisir une ville correcte";
+    return
+  } else {
+    errorCity.textContent = ""
+  }
+}))
+
+
+email.addEventListener("input", debounce((e) => {
+  const re = /^[a-zA-Z0-9_\-.]+@[a-z]{3,}\.[a-z]{2,5}$/
+  const value = e.target.value.match(re)
+  console.log(value);
+  if (!value) {
+    emailErrorMsg.textContent = "Donnée incorrecte, vous devez saisir un email correct";
+  } else {
+    emailErrorMsg.textContent = ""
+  }
+}))
+
+//création de l'ID de la commande et redirection vers la page confirmation
+validateForm.addEventListener("submit", (e) => {
+  e.preventDefault()
+  const contact = {}
+  const dataPost = {}
+  const formData = new FormData(form)
+  const idListApi = listId(getBasketProducts)
+  if(!getBasketProducts){
+    alert("panier vide !")
+    return
+  }
+
+    for(let [key, value] of formData.entries()){
+      contact[key] = value
+    }
+  
+    dataPost.contact = contact
+    dataPost.products = idListApi
+  
+    const objFetch = {
+      method: "POST",
+      headers: {"Content-type": "application/json"},
+      body: JSON.stringify(dataPost)
+    }
+  
+    fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
+    .then(data => {
+        localStorage.clear()
+        document.location.href = "./../html/confirmation.html?idCommand=" + data.orderId
+    })
+    .catch(e => console.log(e))
+    
+    
+})
+
+// ************************ controller formulaire ************************************
+
+
+
+// liste des fonctions
 function totalQuantityArticles(listBasket) {
   if (listBasket.length >= 1) {
     return listBasket.map(product => product.qtt).reduce((total, qtt) => total += qtt)
   } else {
     return 0
+  }
+}
+
+function listId(listBasket) {
+  if (listBasket.length >= 1) {
+    return listBasket.map(product => product.id)
+  } else {
+    return []
   }
 }
 
@@ -174,4 +299,13 @@ function createInput() {
   input.max = "100"
   input.value = ""
   return input
+}
+
+//fonction spéciale pour le debouncing
+function debounce(func, timeout = 500){
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { func.apply(this, args); }, timeout);
+  };
 }
