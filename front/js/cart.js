@@ -7,6 +7,7 @@ const getBasketProducts = productCart.getLocalProduct("product")
 
 //constante pour le panier
 const cart_items = document.querySelector("#cart__items")
+const cart_item = document.querySelectorAll(".cart__item")
 const nbArticles = document.querySelector("#totalQuantity")
 const totalBill = document.querySelector("#totalPrice")
 
@@ -29,24 +30,50 @@ const errorEmail = document.querySelector("#emailErrorMsg")
 
 
 //************************** controller pour les produits du panier ************************
-if (getBasketProducts) {
+getBasketApiProducts(api.getAllProducts(), getBasketProducts, cart_items)
 
-  for (let pdtBasket of getBasketProducts) {
+getAllArticles(api.getAllProducts(), ".deleteItem").then(deleteElements => {
+  for(let deleteElem of deleteElements)
+  deleteElem.addEventListener("click", (e) => {
+    console.log(e);
+    const idArticle = e.path[4]
+    const colorArticle = e.path[4]
+    removeArticles(getBasketProducts, idArticle.dataset.id, colorArticle.dataset.color)
+    nbArticles.textContent = totalQuantityArticles(getBasketProducts)
+    idArticle.remove()
+  })
+});
 
-    api.getAllProducts().then(allProductsApi => {
+getAllArticles(api.getAllProducts(), ".itemQuantity").then(deleteElements => {
+  for(let deleteElem of deleteElements)
+  deleteElem.addEventListener("input", (e) => {
+    const id = e.path[4].dataset.id
+    const color = e.path[4].dataset.color
+    const value = parseInt(e.target.value)
+    changeQuantity(getBasketProducts, id, color, value)
+    nbArticles.textContent = totalQuantityArticles(getBasketProducts)
+  })
+});
+ 
+nbArticles.textContent = totalQuantityArticles(getBasketProducts)
 
-      for(let pdtApi of allProductsApi){
-
-        if(pdtBasket.id === pdtApi._id){
-
-          cart_items.innerHTML += cartHTML(pdtBasket, pdtApi)
+async function getBasketApiProducts(api, tabBasket, cartItem){
+  const fetchApi = await api
+  if(tabBasket){
+    for(let dataBasket of tabBasket){
+      for(let data of fetchApi){
+        if(dataBasket.id === data._id){
+          cartItem.innerHTML += cartHTML(dataBasket, data)
         }
       }
-    })
+    }
   }
 }
 
-nbArticles.textContent = totalQuantityArticles(getBasketProducts)
+async function getAllArticles(api, htmlElement) {
+  const fetchApi = await api
+  return (fetchApi !== null) ? document.querySelectorAll(htmlElement) : console.log("aucun articles disponible !");
+}
 
 //************************** controller pour les produits du panier ************************
 
@@ -55,7 +82,6 @@ nbArticles.textContent = totalQuantityArticles(getBasketProducts)
 firstName.addEventListener("input", debounce((e) => {
   const re = /^[a-zA-Z]{3,}$/
   const value = e.target.value.match(re)
-  console.log(value);
   if (!value) {
     errorFirstName.textContent = "Donnée incorrecte, vous devez saisir un prénom correcte";
   } else {
@@ -67,7 +93,6 @@ firstName.addEventListener("input", debounce((e) => {
 lastName.addEventListener("input", debounce((e) => {
   const re = /^[a-zA-Z]{3,}$/
   const value = e.target.value.match(re)
-  console.log(value);
   if(!value){
     errorLastName.textContent = "Donnée incorrecte, vous devez saisir un nom correcte";
   }else{
@@ -79,7 +104,6 @@ lastName.addEventListener("input", debounce((e) => {
 address.addEventListener("input", debounce((e) => {
   const re = /^[a-zA-Z0-9 ]+$/
   const value = e.target.value.match(re)
-  console.log(value);
   if(!value){
     errorAddress.textContent = "Donnée incorrecte, vous devez saisir une adresse correcte";
   }else{
@@ -90,7 +114,6 @@ address.addEventListener("input", debounce((e) => {
 city.addEventListener("input", debounce((e) => {
   const re = /^[a-zA-Z]{3,}$/
   const value = e.target.value.match(re)
-  console.log(value);
   if (!value) {
     errorCity.textContent = "Donnée incorrecte, vous devez saisir une ville correcte";
     return
@@ -103,7 +126,6 @@ city.addEventListener("input", debounce((e) => {
 email.addEventListener("input", debounce((e) => {
   const re = /^[a-zA-Z0-9_\-.]+@[a-z]{3,}\.[a-z]{2,5}$/
   const value = e.target.value.match(re)
-  console.log(value);
   if (!value) {
     emailErrorMsg.textContent = "Donnée incorrecte, vous devez saisir un email correct";
   } else {
@@ -139,7 +161,7 @@ validateForm.addEventListener("submit", (e) => {
     fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
     .then(data => {
         localStorage.clear()
-        document.location.href = "./../html/confirmation.html?idCommand=" + data.orderId
+        document.location.href = `./../html/confirmation.html?idCommand=${data.orderId}`
     })
     .catch(e => console.log(e))
     
@@ -159,6 +181,17 @@ function totalQuantityArticles(listBasket) {
   }
 }
 
+function changeQuantity(basket, dataSetId, dataSetColor, quantity) {
+  if (basket.length >= 1) {
+    const updateItems = basket.find(obj => obj.id === dataSetId && obj.color === dataSetColor)
+    if(updateItems != null && updateItems.id === dataSetId){
+      updateItems.qtt = quantity
+    }
+  } else {
+    return []
+  }
+}
+
 function listId(listBasket) {
   if (listBasket.length >= 1) {
     return listBasket.map(product => product.id)
@@ -167,7 +200,7 @@ function listId(listBasket) {
   }
 }
 
-function totalPriceArticles(price) {
+function priceTotalQtt(price) {
   totalPrice = 0
   if (price >= 1) {
     totalPrice += price
@@ -177,10 +210,10 @@ function totalPriceArticles(price) {
   return totalPrice
 }
 
-function removeArticles(basket, dataset) {
+function removeArticles(basket, dataSetId) {
   if (basket.length >= 1) {
-    const deletItem = basket.filter(obj => obj.id !== dataset)
-    LocalStorage.setItem("product", deletItem)
+    const updateItems = basket.filter(obj => obj.id !== dataSetId)
+    productCart.setLocalProduct("product", updateItems)
   } else {
     return []
   }

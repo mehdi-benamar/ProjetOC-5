@@ -123,6 +123,7 @@ export default class Products {
       }
     }
     this.setLocalProduct("product", getItem)
+    document.location.href = `${document.location.origin}/front/html/cart.html`
   }
 
 
