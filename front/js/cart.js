@@ -30,52 +30,86 @@ const errorEmail = document.querySelector("#emailErrorMsg")
 
 
 //************************** controller pour les produits du panier ************************
-getBasketApiProducts(api.getAllProducts(), getBasketProducts, cart_items)
-
-getAllArticles(api.getAllProducts(), ".deleteItem").then(deleteElements => {
-  for(let deleteElem of deleteElements)
-  deleteElem.addEventListener("click", (e) => {
-    console.log(e);
-    const idArticle = e.path[4]
-    const colorArticle = e.path[4]
-    removeArticles(getBasketProducts, idArticle.dataset.id, colorArticle.dataset.color)
-    nbArticles.textContent = totalQuantityArticles(getBasketProducts)
-    idArticle.remove()
-  })
-});
-
-getAllArticles(api.getAllProducts(), ".itemQuantity").then(deleteElements => {
-  for(let deleteElem of deleteElements)
-  deleteElem.addEventListener("input", (e) => {
-    const id = e.path[4].dataset.id
-    const color = e.path[4].dataset.color
-    const value = parseInt(e.target.value)
-    changeQuantity(getBasketProducts, id, color, value)
-    nbArticles.textContent = totalQuantityArticles(getBasketProducts)
-  })
-});
- 
+htmlProducts(getBasketApiProducts(api.getAllProducts(), getBasketProducts), cart_items)
+getTotalPrice(getBasketApiProducts(api.getAllProducts(), getBasketProducts)).then(price => {
+  totalBill.textContent = price * totalQuantityArticles(getBasketProducts)
+})
 nbArticles.textContent = totalQuantityArticles(getBasketProducts)
 
-async function getBasketApiProducts(api, tabBasket, cartItem){
+window.addEventListener("load", () => {
+  getAllArticles(api.getAllProducts(), ".cart__item").then(articleElements => {
+    for (let article of articleElements) {
+      let getNewBasketDelete
+      let getNewBasketChange
+      const idArticle = article.dataset.id
+      const colorArticle = article.dataset.color
+      const deleteButton = article.children[1].lastElementChild.lastElementChild.children[0]
+      const inputElem = article.children[1].lastElementChild.firstElementChild.children[1]
+
+      inputElem.addEventListener("change", (e) => {
+        getNewBasketChange = productCart.getLocalProduct("product")
+        changeQuantity(getNewBasketChange, idArticle, colorArticle, parseInt(e.target.value))
+        nbArticles.textContent = totalQuantityArticles(getNewBasketChange)
+        getTotalPrice(getBasketApiProducts(api.getAllProducts(), getNewBasketChange)).then(price => {
+          totalBill.textContent = price * totalQuantityArticles(getNewBasketChange)
+        })
+      })
+
+      deleteButton.addEventListener("click", (e) => {
+        removeArticles(getBasketProducts, idArticle, colorArticle)
+        getNewBasketDelete = productCart.getLocalProduct("product")
+        nbArticles.textContent = totalQuantityArticles(getNewBasketDelete)
+        getTotalPrice(getBasketApiProducts(api.getAllProducts(), getNewBasketDelete)).then(price => {
+          totalBill.textContent = price * totalQuantityArticles(getNewBasketDelete)
+        })
+        article.remove()
+      })
+    }
+  })
+})
+
+//************************** controller pour les produits du panier ************************
+
+
+//************************** controller asynchrone ************************
+async function getBasketApiProducts(api, tabBasket) {
   const fetchApi = await api
-  if(tabBasket){
-    for(let dataBasket of tabBasket){
-      for(let data of fetchApi){
-        if(dataBasket.id === data._id){
-          cartItem.innerHTML += cartHTML(dataBasket, data)
+  const tab = []
+  if (tabBasket) {
+    for (let dataBasket of tabBasket) {
+      for (let data of fetchApi) {
+        if (dataBasket.id === data._id) {
+          tab.push({ ...dataBasket, data })
         }
       }
     }
   }
+  return tab
 }
+
+async function htmlProducts(cb, htmlElem) {
+  const res = await cb
+  const datas = await res
+  for (let data of datas) {
+    htmlElem.innerHTML += cartHTML(data)
+  }
+}
+
+async function getTotalPrice(cb) {
+  const res = await cb
+  const datas = await res
+  return totalPrice(datas);
+}
+
+
 
 async function getAllArticles(api, htmlElement) {
   const fetchApi = await api
-  return (fetchApi !== null) ? document.querySelectorAll(htmlElement) : console.log("aucun articles disponible !");
+  return (fetchApi != null) ? document.querySelectorAll(htmlElement) : console.log("aucun articles disponible !");
 }
+//************************** controller asynchrone ************************
 
-//************************** controller pour les produits du panier ************************
+
 
 //************************* controller pour le formulaire **********************************
 
@@ -93,9 +127,9 @@ firstName.addEventListener("input", debounce((e) => {
 lastName.addEventListener("input", debounce((e) => {
   const re = /^[a-zA-Z]{3,}$/
   const value = e.target.value.match(re)
-  if(!value){
+  if (!value) {
     errorLastName.textContent = "Donnée incorrecte, vous devez saisir un nom correcte";
-  }else{
+  } else {
     errorLastName.textContent = ""
   }
 }))
@@ -104,9 +138,9 @@ lastName.addEventListener("input", debounce((e) => {
 address.addEventListener("input", debounce((e) => {
   const re = /^[a-zA-Z0-9 ]+$/
   const value = e.target.value.match(re)
-  if(!value){
+  if (!value) {
     errorAddress.textContent = "Donnée incorrecte, vous devez saisir une adresse correcte";
-  }else{
+  } else {
     errorAddress.textContent = ""
   }
 }))
@@ -140,32 +174,32 @@ validateForm.addEventListener("submit", (e) => {
   const dataPost = {}
   const formData = new FormData(form)
   const idListApi = listId(getBasketProducts)
-  if(!getBasketProducts){
+  if (!getBasketProducts) {
     alert("panier vide !")
     return
   }
 
-    for(let [key, value] of formData.entries()){
-      contact[key] = value
-    }
-  
-    dataPost.contact = contact
-    dataPost.products = idListApi
-  
-    const objFetch = {
-      method: "POST",
-      headers: {"Content-type": "application/json"},
-      body: JSON.stringify(dataPost)
-    }
-  
-    fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
+  for (let [key, value] of formData.entries()) {
+    contact[key] = value
+  }
+
+  dataPost.contact = contact
+  dataPost.products = idListApi
+
+  const objFetch = {
+    method: "POST",
+    headers: { "Content-type": "application/json" },
+    body: JSON.stringify(dataPost)
+  }
+
+  fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
     .then(data => {
-        localStorage.clear()
-        document.location.href = `./../html/confirmation.html?idCommand=${data.orderId}`
+      localStorage.clear()
+      document.location.href = `./../html/confirmation.html?idCommand=${data.orderId}`
     })
     .catch(e => console.log(e))
-    
-    
+
+
 })
 
 // ************************ controller formulaire ************************************
@@ -175,20 +209,28 @@ validateForm.addEventListener("submit", (e) => {
 // liste des fonctions
 function totalQuantityArticles(listBasket) {
   if (listBasket.length >= 1) {
-    return listBasket.map(product => product.qtt).reduce((total, qtt) => total += qtt)
+    return listBasket.map(product => product.qtt).reduce((total, qtt) => total += qtt, 0)
+  } else {
+    return 0
+  }
+}
+function totalPrice(listBasket) {
+  if (listBasket.length >= 1) {
+    return listBasket.map(product => product.data.price).reduce((total, price) => total += price, 0)
   } else {
     return 0
   }
 }
 
 function changeQuantity(basket, dataSetId, dataSetColor, quantity) {
+  let updateItems
   if (basket.length >= 1) {
-    const updateItems = basket.find(obj => obj.id === dataSetId && obj.color === dataSetColor)
-    if(updateItems != null && updateItems.id === dataSetId){
+    updateItems = basket.find(obj => obj.id === dataSetId && obj.color === dataSetColor)
+    if (updateItems !== null && updateItems.id === dataSetId) {
       updateItems.qtt = quantity
     }
   } else {
-    return []
+    return 0
   }
 }
 
@@ -200,42 +242,33 @@ function listId(listBasket) {
   }
 }
 
-function priceTotalQtt(price) {
-  totalPrice = 0
-  if (price >= 1) {
-    totalPrice += price
-  } else {
-    return 0
-  }
-  return totalPrice
-}
 
-function removeArticles(basket, dataSetId) {
+function removeArticles(basket, dataSetId, dataSetColor) {
   if (basket.length >= 1) {
-    const updateItems = basket.filter(obj => obj.id !== dataSetId)
+    const updateItems = basket.filter(obj => obj.id !== dataSetId || obj.color !== dataSetColor)
     productCart.setLocalProduct("product", updateItems)
   } else {
     return []
   }
 }
 
-function cartHTML(basket, api) {
+function cartHTML(datas) {
 
 
-  return `<article class="cart__item" data-id="${basket.id}" data-color="${basket.color}">
+  return `<article class="cart__item" data-id="${datas.id}" data-color="${datas.color}">
     <div class="cart__item__img">
-      <img src="${api.imageUrl}" alt="${api.altTxt}">
+      <img src="${datas.data.imageUrl}" alt="${datas.data.altTxt}">
     </div>
     <div class="cart__item__content">
       <div class="cart__item__content__description">
-        <h2>${api.name}</h2>
-        <p>${basket.color}</p>
-        <p>${api.price} €</p>
+        <h2>${datas.data.name}</h2>
+        <p>${datas.color}</p>
+        <p>${datas.data.price} €</p>
       </div>
       <div class="cart__item__content__settings">
         <div class="cart__item__content__settings__quantity">
           <p>Qté : </p>
-          <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${basket.qtt}">
+          <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${datas.qtt}">
         </div>
         <div class="cart__item__content__settings__delete">
           <p class="deleteItem">Supprimer</p>
@@ -245,7 +278,7 @@ function cartHTML(basket, api) {
   </article>`
 }
 
-function itemArticle({id, color}){
+function itemArticle({ id, color }) {
   const article = document.createElement("article")
   article.setAttribute("data-id", id)
   article.setAttribute("data-color", color)
@@ -255,7 +288,7 @@ function itemArticle({id, color}){
   return article
 }
 
-function itemImg(){
+function itemImg() {
   const div = document.createElement("div")
   const img = document.createElement("img")
   div.classList.add("cart__item__img")
@@ -264,7 +297,7 @@ function itemImg(){
 
 }
 
-function itemContent(){
+function itemContent() {
   const div = document.createElement("div")
   div.classList.add("cart__item__content")
   div.appendChild(itemContentDescription())
@@ -272,7 +305,7 @@ function itemContent(){
   return div
 }
 
-function itemContentDescription(){
+function itemContentDescription() {
   const div = document.createElement("div")
   const h2 = document.createElement("h2")
   const p = document.createElement("p")
@@ -285,10 +318,10 @@ function itemContentDescription(){
   div.appendChild(p)
   div.appendChild(p2)
 
- return div
+  return div
 }
 
-function itemContentSettings(){
+function itemContentSettings() {
   const div = document.createElement("div")
   div.classList.add("cart__item__content__settings")
   div.appendChild(itemQuantity())
@@ -297,7 +330,7 @@ function itemContentSettings(){
   return div
 }
 
-function itemQuantity(){
+function itemQuantity() {
   const div = document.createElement("div")
   const p = document.createElement("p")
   div.classList.add("cart__item__content__settings__quantity")
@@ -310,7 +343,7 @@ function itemQuantity(){
   return div
 }
 
-function itemDelete(){
+function itemDelete() {
   const div = document.createElement("div")
   const p = document.createElement("p")
   div.classList.add("cart__item__content__settings__delete")
@@ -335,7 +368,7 @@ function createInput() {
 }
 
 //fonction spéciale pour le debouncing
-function debounce(func, timeout = 500){
+function debounce(func, timeout = 500) {
   let timer;
   return (...args) => {
     clearTimeout(timer);
