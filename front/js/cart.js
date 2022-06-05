@@ -31,9 +31,11 @@ const errorEmail = document.querySelector("#emailErrorMsg")
 
 //************************** controller pour les produits du panier ************************
 htmlProducts(getBasketApiProducts(api.getAllProducts(), getBasketProducts), cart_items)
+
 getTotalPrice(getBasketApiProducts(api.getAllProducts(), getBasketProducts)).then(price => {
   totalBill.textContent = price * totalQuantityArticles(getBasketProducts)
 })
+
 nbArticles.textContent = totalQuantityArticles(getBasketProducts)
 
 window.addEventListener("load", () => {
@@ -169,37 +171,40 @@ email.addEventListener("input", debounce((e) => {
 
 //création de l'ID de la commande et redirection vers la page confirmation
 validateForm.addEventListener("submit", (e) => {
-  e.preventDefault()
-  const contact = {}
-  const dataPost = {}
-  const formData = new FormData(form)
-  const idListApi = listId(getBasketProducts)
-  if (!getBasketProducts) {
-    alert("panier vide !")
+
+  
+  if(!productCart.getLocalProduct("product")){
+    alert("le panier est vide, vous devez au moins ajouter un article")
     return
+  }else{
+
+    e.preventDefault()
+    const contact = {}
+    const dataPost = {}
+    const formData = new FormData(form)
+    const idListApi = listId(productCart.getLocalProduct("product"))
+  
+
+    for (let [key, value] of formData.entries()) {
+      contact[key] = value
+    }
+  
+    dataPost.contact = contact
+    dataPost.products = idListApi
+  
+    const objFetch = {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify(dataPost)
+    }
+  
+    fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
+      .then(data => {
+        localStorage.clear()
+        document.location.href = `./../html/confirmation.html?idCommand=${data.orderId}`
+      })
+      .catch(e => console.log(e))
   }
-
-  for (let [key, value] of formData.entries()) {
-    contact[key] = value
-  }
-
-  dataPost.contact = contact
-  dataPost.products = idListApi
-
-  const objFetch = {
-    method: "POST",
-    headers: { "Content-type": "application/json" },
-    body: JSON.stringify(dataPost)
-  }
-
-  fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
-    .then(data => {
-      localStorage.clear()
-      document.location.href = `./../html/confirmation.html?idCommand=${data.orderId}`
-    })
-    .catch(e => console.log(e))
-
-
 })
 
 // ************************ controller formulaire ************************************
@@ -254,7 +259,6 @@ function removeArticles(basket, dataSetId, dataSetColor) {
 
 function cartHTML(datas) {
 
-
   return `<article class="cart__item" data-id="${datas.id}" data-color="${datas.color}">
     <div class="cart__item__img">
       <img src="${datas.data.imageUrl}" alt="${datas.data.altTxt}">
@@ -276,95 +280,6 @@ function cartHTML(datas) {
       </div>
     </div>
   </article>`
-}
-
-function itemArticle({ id, color }) {
-  const article = document.createElement("article")
-  article.setAttribute("data-id", id)
-  article.setAttribute("data-color", color)
-  article.classList.add("cart__item")
-  article.appendChild(itemImg())
-  article.appendChild(itemContent())
-  return article
-}
-
-function itemImg() {
-  const div = document.createElement("div")
-  const img = document.createElement("img")
-  div.classList.add("cart__item__img")
-  div.appendChild(img)
-  return div
-
-}
-
-function itemContent() {
-  const div = document.createElement("div")
-  div.classList.add("cart__item__content")
-  div.appendChild(itemContentDescription())
-  div.appendChild(itemContentSettings())
-  return div
-}
-
-function itemContentDescription() {
-  const div = document.createElement("div")
-  const h2 = document.createElement("h2")
-  const p = document.createElement("p")
-  const p2 = document.createElement("p")
-
-  div.classList.add("cart__item__content__description")
-  p.textContent = ""
-
-  div.appendChild(h2)
-  div.appendChild(p)
-  div.appendChild(p2)
-
-  return div
-}
-
-function itemContentSettings() {
-  const div = document.createElement("div")
-  div.classList.add("cart__item__content__settings")
-  div.appendChild(itemQuantity())
-  div.appendChild(itemDelete())
-
-  return div
-}
-
-function itemQuantity() {
-  const div = document.createElement("div")
-  const p = document.createElement("p")
-  div.classList.add("cart__item__content__settings__quantity")
-
-  p.textContent = "Qté : "
-
-  div.appendChild(p)
-  div.appendChild(createInput())
-
-  return div
-}
-
-function itemDelete() {
-  const div = document.createElement("div")
-  const p = document.createElement("p")
-  div.classList.add("cart__item__content__settings__delete")
-  p.classList.add("deleteItem")
-  p.textContent = "Supprimer"
-
-  div.appendChild(p)
-
-  return div
-
-}
-
-function createInput() {
-  const input = document.createElement("input")
-  input.type = "number"
-  input.classList.add("itemQuantity")
-  input.name = "itemQuantity"
-  input.min = "1"
-  input.max = "100"
-  input.value = ""
-  return input
 }
 
 //fonction spéciale pour le debouncing
