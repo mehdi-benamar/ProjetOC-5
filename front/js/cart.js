@@ -59,12 +59,7 @@ window.addEventListener("load", () => {
 
       deleteButton.addEventListener("click", (e) => {
         removeArticles(getBasketProducts, idArticle, colorArticle)
-        getNewBasketDelete = productCart.getLocalProduct("product")
-        nbArticles.textContent = totalQuantityArticles(getNewBasketDelete)
-        getTotalPrice(getBasketApiProducts(api.getAllProducts(), getNewBasketDelete)).then(price => {
-          totalBill.textContent = price * totalQuantityArticles(getNewBasketDelete)
-        })
-        article.remove()
+        document.location.reload()
       })
     }
   })
@@ -74,6 +69,8 @@ window.addEventListener("load", () => {
 
 
 //************************** controller asynchrone ************************
+
+//récupère a la fois les éléments du localstorage et de l'api dont l'ID est le même
 async function getBasketApiProducts(api, tabBasket) {
   const fetchApi = await api
   const tab = []
@@ -89,6 +86,7 @@ async function getBasketApiProducts(api, tabBasket) {
   return tab
 }
 
+//affiche les éléments HTML de chaque articles
 async function htmlProducts(cb, htmlElem) {
   const res = await cb
   const datas = await res
@@ -97,14 +95,14 @@ async function htmlProducts(cb, htmlElem) {
   }
 }
 
+//permet d'obtenir le prix total du panier
 async function getTotalPrice(cb) {
   const res = await cb
   const datas = await res
   return totalPrice(datas);
 }
 
-
-
+//parcours tous éléments HTML crées une fois que l'appel à l'api soit chargé
 async function getAllArticles(api, htmlElement) {
   const fetchApi = await api
   return (fetchApi != null) ? document.querySelectorAll(htmlElement) : console.log("aucun articles disponible !");
@@ -115,59 +113,14 @@ async function getAllArticles(api, htmlElement) {
 
 //************************* controller pour le formulaire **********************************
 
-firstName.addEventListener("input", debounce((e) => {
-  const re = /^[a-zA-Z]{3,}$/
-  const value = e.target.value.match(re)
-  if (!value) {
-    errorFirstName.textContent = "Donnée incorrecte, vous devez saisir un prénom correcte";
-  } else {
-    errorFirstName.textContent = ""
-  }
-}))
+
+firstName.addEventListener("input", debounce((e) => inputEventMessage(/^[a-zA-Z]{3,}$/, e, errorFirstName, "Prénom incorrecte")))
+lastName.addEventListener("input", debounce((e) => inputEventMessage(/^[a-zA-Z]{3,}$/, e, errorLastName ,"Nom incorrecte")))
+address.addEventListener("input", debounce((e) => inputEventMessage(/^[a-zA-Z0-9 ]+$/, e, errorAddress ,"Adresse incorrecte")))
+city.addEventListener("input", debounce((e) => inputEventMessage(/^[a-zA-Z]{3,}$/, e, errorCity ,"Ville incorrecte")))
+email.addEventListener("input", debounce((e) => inputEventMessage(/^[a-zA-Z0-9_\-.]+@[a-z]{3,}\.[a-z]{2,5}$/, e, errorEmail ,"Email incorrecte")))
 
 
-lastName.addEventListener("input", debounce((e) => {
-  const re = /^[a-zA-Z]{3,}$/
-  const value = e.target.value.match(re)
-  if (!value) {
-    errorLastName.textContent = "Donnée incorrecte, vous devez saisir un nom correcte";
-  } else {
-    errorLastName.textContent = ""
-  }
-}))
-
-
-address.addEventListener("input", debounce((e) => {
-  const re = /^[a-zA-Z0-9 ]+$/
-  const value = e.target.value.match(re)
-  if (!value) {
-    errorAddress.textContent = "Donnée incorrecte, vous devez saisir une adresse correcte";
-  } else {
-    errorAddress.textContent = ""
-  }
-}))
-
-city.addEventListener("input", debounce((e) => {
-  const re = /^[a-zA-Z]{3,}$/
-  const value = e.target.value.match(re)
-  if (!value) {
-    errorCity.textContent = "Donnée incorrecte, vous devez saisir une ville correcte";
-    return
-  } else {
-    errorCity.textContent = ""
-  }
-}))
-
-
-email.addEventListener("input", debounce((e) => {
-  const re = /^[a-zA-Z0-9_\-.]+@[a-z]{3,}\.[a-z]{2,5}$/
-  const value = e.target.value.match(re)
-  if (!value) {
-    emailErrorMsg.textContent = "Donnée incorrecte, vous devez saisir un email correct";
-  } else {
-    emailErrorMsg.textContent = ""
-  }
-}))
 
 //création de l'ID de la commande et redirection vers la page confirmation
 validateForm.addEventListener("submit", (e) => {
@@ -201,7 +154,7 @@ validateForm.addEventListener("submit", (e) => {
     fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
       .then(data => {
         localStorage.clear()
-        document.location.href = `./../html/confirmation.html?idCommand=${data.orderId}`
+        document.location.href = `${document.location.origin}/front/html/confirmation.html?idCommand=${data.orderId}`
       })
       .catch(e => console.log(e))
   }
@@ -212,6 +165,19 @@ validateForm.addEventListener("submit", (e) => {
 
 
 // liste des fonctions
+
+//vérifie la validité de la saisie utilisateur en envoyant un message d'erreur
+function inputEventMessage(regex, event, errorElement, message){
+  const re = regex
+  const value = event.target.value.match(re)
+  if (!value) {
+    errorElement.textContent = message;
+  } else {
+    errorElement.textContent = ""
+  }
+}
+
+//calcule la quantité totale des articles dans le panier
 function totalQuantityArticles(listBasket) {
   if (listBasket.length >= 1) {
     return listBasket.map(product => product.qtt).reduce((total, qtt) => total += qtt, 0)
@@ -219,6 +185,8 @@ function totalQuantityArticles(listBasket) {
     return 0
   }
 }
+
+//permet d'obtenir le prix total
 function totalPrice(listBasket) {
   if (listBasket.length >= 1) {
     return listBasket.map(product => product.data.price).reduce((total, price) => total += price, 0)
@@ -227,6 +195,7 @@ function totalPrice(listBasket) {
   }
 }
 
+//permet de changer la quantité et de la mettre à jour pour l'article en question
 function changeQuantity(basket, dataSetId, dataSetColor, quantity) {
   let updateItems
   if (basket.length >= 1) {
@@ -239,6 +208,7 @@ function changeQuantity(basket, dataSetId, dataSetColor, quantity) {
   }
 }
 
+//liste des ID des articles
 function listId(listBasket) {
   if (listBasket.length >= 1) {
     return listBasket.map(product => product.id)
@@ -247,7 +217,7 @@ function listId(listBasket) {
   }
 }
 
-
+//suppression de ou des articles
 function removeArticles(basket, dataSetId, dataSetColor) {
   if (basket.length >= 1) {
     const updateItems = basket.filter(obj => obj.id !== dataSetId || obj.color !== dataSetColor)
@@ -257,6 +227,7 @@ function removeArticles(basket, dataSetId, dataSetColor) {
   }
 }
 
+//insertion des articles en générant le code HTML
 function cartHTML(datas) {
 
   return `<article class="cart__item" data-id="${datas.id}" data-color="${datas.color}">
@@ -282,7 +253,7 @@ function cartHTML(datas) {
   </article>`
 }
 
-//fonction spéciale pour le debouncing
+//fonction spéciale pour le debouncing (permet d'alleger les ressources via les événements)
 function debounce(func, timeout = 500) {
   let timer;
   return (...args) => {

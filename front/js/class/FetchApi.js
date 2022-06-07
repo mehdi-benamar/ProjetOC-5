@@ -1,5 +1,5 @@
 export default class FetchApi {
-  
+
   constructor(uriApi) {
     this.uriApi = uriApi
   }
@@ -9,6 +9,7 @@ export default class FetchApi {
    * @returns Promise
    */
 
+  //Obtention de tous les articles de l'api
   async getAllProducts() {
     let allProducts = []
     try {
@@ -31,6 +32,7 @@ export default class FetchApi {
    * @returns Promise
    */
 
+  //obtention d'un article de l'api
   async getOneProduct() {
     try {
       const fetchApi = await fetch(this.uriApi)

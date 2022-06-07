@@ -5,6 +5,7 @@ export default class Products {
   * @returns documentFragment
   */
 
+  //création des éléments HTML de tous les produits pour la page d'accueil
   HTMLallProducts(productsTab) {
     const fragment = new DocumentFragment()
     for (let product of productsTab) {
@@ -38,6 +39,7 @@ export default class Products {
    * @param {string} altTexte 
    * @returns HTMLElement
    */
+    //création d'une image HTML
   createImageTag(elementTag, source, altTexte) {
     const tag = document.createElement(elementTag)
     tag.src = source
@@ -51,6 +53,7 @@ export default class Products {
     * @param {string} content 
     * @returns HTMLElement
     */
+   // création d'un élément HTML
   createElementTag(elementTag, content) {
     const tag = document.createElement(elementTag)
     tag.textContent = content
@@ -64,6 +67,7 @@ export default class Products {
    * @param {string} text 
    * @returns HTMLElement
    */
+  //création d'un élément HTML "option"
   createOptionTag(elementTag, value, text) {
     const tag = document.createElement(elementTag)
     tag.value = value
@@ -76,6 +80,7 @@ export default class Products {
    * @param {array} listOption 
    * @returns array[HTMLElements]
    */
+  //création d'une liste de balise "option"
   insertOption(listOption) {
     let list = []
     for (let option of listOption) {
@@ -91,6 +96,7 @@ export default class Products {
    * @param {string} quantity 
    * @returns void
    */
+  //ajout d'un article dans le localstorage si celui-ci n'existe pas ou mise à jour de sa quantité
   addToBasket(idParametre, color, quantity) {
     const qtt = parseInt(quantity)
     let product = {}
@@ -132,6 +138,7 @@ export default class Products {
    * @param {string} key 
    * @returns mixed
    */
+  //obtenir les produits du localstorage
   getLocalProduct(key) {
     let basket = localStorage.getItem(key)
     return (basket != null) ? JSON.parse(basket) : []
@@ -143,6 +150,7 @@ export default class Products {
    * @param {mixed} tab 
    * @returns void
    */
+  //insérer les produits dans le localstorage
   setLocalProduct(key, tab) {
     return localStorage.setItem(key, JSON.stringify(tab))
   }

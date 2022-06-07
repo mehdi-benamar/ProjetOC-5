@@ -8,6 +8,7 @@ const descript = document.querySelector("#description")
 const selectOptions = document.querySelector("#colors")
 const addButton = document.querySelector("#addToCart")
 const qtt = document.querySelector("#quantity")
+const host = document.location.origin
 
 // let productList = []
 
@@ -15,7 +16,7 @@ const parametresList = new URLSearchParams(document.location.search)
 const idParametre = parametresList.get("id")
 
 if (!idParametre) {
-  document.location.href = "./../html/index.html"
+  document.location.href = `${host}/front/html/index.html`
 }
 
 const api = new FetchApi(`http://localhost:3000/api/products/${idParametre}`)
@@ -25,7 +26,7 @@ api.getOneProduct().then(dataProduct => {
   const { _id, altTxt, colors, description, imageUrl, name, price } = dataProduct
 
   if(idParametre !== _id){
-    document.location.href = "./../html/index.html"
+    document.location.href = `${host}/front/html/index.html`
     return
   }
 
