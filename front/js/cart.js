@@ -174,32 +174,27 @@ validateForm.addEventListener("submit", (e) => {
   const dataPost = {}
   const formData = new FormData(form)
   const idListApi = listId(getBasketProducts)
-  if (!getBasketProducts) {
+  if (idListApi.length !== 0) {
+    for (let [key, value] of formData.entries()) {
+      contact[key] = value
+    }
+    dataPost.contact = contact
+    dataPost.products = idListApi
+    const objFetch = {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify(dataPost)
+    }
+    fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
+      .then(data => {
+        localStorage.clear()
+        document.location.href = `./../html/confirmation.html?idCommand=${data.orderId}`
+      })
+      .catch(e => console.log(e))
+  } else {
     alert("panier vide !")
     return
   }
-
-  for (let [key, value] of formData.entries()) {
-    contact[key] = value
-  }
-
-  dataPost.contact = contact
-  dataPost.products = idListApi
-
-  const objFetch = {
-    method: "POST",
-    headers: { "Content-type": "application/json" },
-    body: JSON.stringify(dataPost)
-  }
-
-  fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
-    .then(data => {
-      localStorage.clear()
-      document.location.href = `./../html/confirmation.html?idCommand=${data.orderId}`
-    })
-    .catch(e => console.log(e))
-
-
 })
 
 // ************************ controller formulaire ************************************
