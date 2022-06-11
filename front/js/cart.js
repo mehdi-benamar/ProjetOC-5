@@ -125,38 +125,35 @@ email.addEventListener("input", debounce((e) => inputEventMessage(/^[a-zA-Z0-9_\
 //création de l'ID de la commande et redirection vers la page confirmation
 validateForm.addEventListener("submit", (e) => {
 
-  
-  if(!productCart.getLocalProduct("product")){
-    alert("le panier est vide, vous devez au moins ajouter un article")
-    return
-  }else{
+  e.preventDefault()
+  const contact = {}
+  const dataPost = {}
+  const formData = new FormData(form)
+  const idListApi = listId(productCart.getLocalProduct("product"))
 
-    e.preventDefault()
-    const contact = {}
-    const dataPost = {}
-    const formData = new FormData(form)
-    const idListApi = listId(productCart.getLocalProduct("product"))
-  
-
+  if (idListApi >= 1) {
     for (let [key, value] of formData.entries()) {
       contact[key] = value
     }
-  
+
     dataPost.contact = contact
     dataPost.products = idListApi
-  
+
     const objFetch = {
       method: "POST",
       headers: { "Content-type": "application/json" },
       body: JSON.stringify(dataPost)
     }
-  
+
     fetch("http://localhost:3000/api/products/order", objFetch).then(res => res.json())
       .then(data => {
         localStorage.clear()
         document.location.href = `${document.location.origin}/front/html/confirmation.html?idCommand=${data.orderId}`
       })
       .catch(e => console.log(e))
+  } else {
+    alert("Panier vide !")
+    return
   }
 })
 
