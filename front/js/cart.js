@@ -131,7 +131,7 @@ validateForm.addEventListener("submit", (e) => {
   const formData = new FormData(form)
   const idListApi = listId(productCart.getLocalProduct("product"))
 
-  if (idListApi >= 1) {
+  if (idListApi.length >= 1) {
     for (let [key, value] of formData.entries()) {
       contact[key] = value
     }
